@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<subsonic-response>
+	<user id="user1" name="User One"/>
+	<user id="user2" name="User Two"/>
+</subsonic-response>
