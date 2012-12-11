@@ -17,10 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.hardincoding.sonar.R;
-import com.hardincoding.sonar.R.id;
-import com.hardincoding.sonar.R.layout;
-import com.hardincoding.sonar.R.menu;
-import com.hardincoding.sonar.R.string;
 import com.hardincoding.sonar.subsonic.service.SubsonicMusicService;
 import com.hardincoding.sonar.util.ErrorDialog;
 import com.hardincoding.sonar.util.ModalBackgroundTask;

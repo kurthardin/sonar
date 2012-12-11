@@ -3,7 +3,6 @@
  */
 package com.hardincoding.sonar.subsonic.service;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,31 +14,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.AuthState;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.conn.params.ConnPerRouteBean;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.scheme.SocketFactory;
-import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
@@ -93,9 +84,6 @@ public enum SubsonicMusicService {
     private static final int HTTP_REQUEST_MAX_ATTEMPTS = 5;
     private static final long REDIRECTION_CHECK_INTERVAL_MILLIS = 60L * 60L * 1000L;
 
-    // Character encoding used throughout.
-    public static final String UTF_8 = "UTF-8";
-
     // REST protocol version and client ID.
     // Note: Keep it as low as possible to maintain compatibility with older servers.
     public static final String REST_PROTOCOL_VERSION = "1.2.0";
@@ -110,6 +98,9 @@ public enum SubsonicMusicService {
     private String redirectTo;
     private long redirectionLastChecked;
     private int redirectionNetworkType = -1;
+    
+    private String mUsername;
+    private String mPassword;
 	
 	private SubsonicMusicService() {
 		// Create and initialize default HTTP parameters
@@ -133,25 +124,25 @@ public enum SubsonicMusicService {
         // be using the HttpClient.
         connManager = new ThreadSafeClientConnManager(params, schemeRegistry);
 		
-		HttpRequestInterceptor preemptiveAuth = new HttpRequestInterceptor() {
-		    public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
-		        AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
-		        CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(
-		                ClientContext.CREDS_PROVIDER);
-		        HttpHost targetHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
-		        
-		        if (authState.getAuthScheme() == null) {
-		            AuthScope authScope = new AuthScope(targetHost.getHostName(), targetHost.getPort());
-		            Credentials creds = credsProvider.getCredentials(authScope);
-		            if (creds != null) {
-		                authState.setAuthScheme(new BasicScheme());
-		                authState.setCredentials(creds);
-		            }
-		        }
-		    }    
-		};
+//		HttpRequestInterceptor preemptiveAuth = new HttpRequestInterceptor() {
+//		    public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
+//		        AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
+//		        CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(
+//		                ClientContext.CREDS_PROVIDER);
+//		        HttpHost targetHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
+//		        
+//		        if (authState.getAuthScheme() == null) {
+//		            AuthScope authScope = new AuthScope(targetHost.getHostName(), targetHost.getPort());
+//		            Credentials creds = credsProvider.getCredentials(authScope);
+//		            if (creds != null) {
+//		                authState.setAuthScheme(new BasicScheme());
+//		                authState.setCredentials(creds);
+//		            }
+//		        }
+//		    }    
+//		};
 		mHttpClient = new DefaultHttpClient(connManager, params);
-		mHttpClient.addRequestInterceptor(preemptiveAuth, 0);
+//		mHttpClient.addRequestInterceptor(preemptiveAuth, 0);
 	}
 
 	private SocketFactory createSSLSocketFactory() {
@@ -173,6 +164,9 @@ public enum SubsonicMusicService {
 	}
 	
 	public void setCredentials(final String username, final String password) {
+		mUsername = username;
+		mPassword = password;
+		
 		AuthScope auth = new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT);
 		Credentials credentials = new UsernamePasswordCredentials(username, password);
 		mHttpClient.getCredentialsProvider().setCredentials(auth, credentials);
@@ -226,7 +220,7 @@ public enum SubsonicMusicService {
         }
 
         InputStream in = entity.getContent();
-        return new InputStreamReader(in, UTF_8);
+        return new InputStreamReader(in, Util.UTF_8);
     }
 
     private HttpEntity getEntityForURL(Context context, String url, HttpParams requestParams, List<String> parameterNames,
@@ -285,7 +279,7 @@ public enum SubsonicMusicService {
                 for (int i = 0; i < parameterNames.size(); i++) {
                     params.add(new BasicNameValuePair(parameterNames.get(i), String.valueOf(parameterValues.get(i))));
                 }
-                request.setEntity(new UrlEncodedFormEntity(params, UTF_8));
+                request.setEntity(new UrlEncodedFormEntity(params, Util.UTF_8));
             }
 
             if (requestParams != null) {
@@ -298,15 +292,6 @@ public enum SubsonicMusicService {
                     request.addHeader(header);
                 }
             }
-
-            // TODO Remove...
-//            // Set credentials to get through apache proxies that require authentication.
-//            SharedPreferences prefs = Util.getPreferences(context);
-//            int instance = prefs.getInt(Constants.PREFERENCES_KEY_SERVER_INSTANCE, 1);
-//            String username = prefs.getString(Constants.PREFERENCES_KEY_USERNAME + instance, null);
-//            String password = prefs.getString(Constants.PREFERENCES_KEY_PASSWORD + instance, null);
-//            httpClient.getCredentialsProvider().setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-//                    new UsernamePasswordCredentials(username, password));
 
             try {
                 HttpResponse response = mHttpClient.execute(request, httpContext);
@@ -395,7 +380,10 @@ public enum SubsonicMusicService {
             builder.append("/");
         }
         builder.append("rest/").append(method).append(".view");
-        builder.append("?v=").append(REST_PROTOCOL_VERSION);
+        builder.append("?u=").append(mUsername);
+        String password = "enc:" + Util.utf8HexEncode(mPassword);
+        builder.append("&p=").append(password);
+        builder.append("&v=").append(REST_PROTOCOL_VERSION);
         builder.append("&c=").append(REST_CLIENT_ID);
         return builder.toString();
     }
