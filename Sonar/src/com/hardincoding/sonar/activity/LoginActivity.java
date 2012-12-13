@@ -7,7 +7,6 @@ import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
@@ -18,7 +17,7 @@ import android.widget.Toast;
 
 import com.hardincoding.sonar.R;
 import com.hardincoding.sonar.subsonic.service.SubsonicMusicService;
-import com.hardincoding.sonar.util.ErrorDialog;
+import com.hardincoding.sonar.util.ConnectionErrorDialog;
 import com.hardincoding.sonar.util.ModalBackgroundTask;
 import com.hardincoding.sonar.util.ProgressListener;
 import com.hardincoding.sonar.util.ToastProgressListener;
@@ -29,12 +28,10 @@ import com.hardincoding.sonar.util.ToastProgressListener;
  */
 public class LoginActivity extends Activity {
 	
-	private static final String TAG = LoginActivity.class.getSimpleName();
-
 	/**
 	 * The default email to populate the email field with.
 	 */
-	public static final String EXTRA_EMAIL = "com.example.android.authenticatordemo.extra.EMAIL";
+	public static final String EXTRA_USERNAME = "com.hardincoding.sonar.extra.USERNAME";
 
 	/**
 	 * Keep track of the login task to ensure we can cancel it if requested.
@@ -63,8 +60,8 @@ public class LoginActivity extends Activity {
 		// Set up the login form.
 		mServerView = (EditText) findViewById(R.id.server);
 		
-		mUsername = getIntent().getStringExtra(EXTRA_EMAIL);
-		mUsernameView = (EditText) findViewById(R.id.email);
+		mUsername = getIntent().getStringExtra(EXTRA_USERNAME);
+		mUsernameView = (EditText) findViewById(R.id.username);
 		mUsernameView.setText(mUsername);
 
 		mPasswordView = (EditText) findViewById(R.id.password);
@@ -73,7 +70,7 @@ public class LoginActivity extends Activity {
 					@Override
 					public boolean onEditorAction(TextView textView, int id,
 							KeyEvent keyEvent) {
-						if (id == R.id.login || id == EditorInfo.IME_NULL) {
+						if (id == R.id.login || id == EditorInfo.IME_NULL || id == EditorInfo.IME_ACTION_DONE) {
 							attemptLogin();
 							return true;
 						}
@@ -107,6 +104,7 @@ public class LoginActivity extends Activity {
 	 * errors are presented and no actual login attempt is made.
 	 */
 	public void attemptLogin() {
+		
 		if (mAuthTask != null) {
 			return;
 		}
@@ -135,24 +133,19 @@ public class LoginActivity extends Activity {
 			cancel = true;
 		}
 
-		// Check for a valid email address.
+		// Check for a valid username.
 		if (TextUtils.isEmpty(mUsername)) {
 			mUsernameView.setError(getString(R.string.error_field_required));
 			focusView = mUsernameView;
 			cancel = true;
-		} 
-//		else if (!mUsername.contains("@")) {
-//			mUsernameView.setError(getString(R.string.error_invalid_email));
-//			focusView = mUsernameView;
-//			cancel = true;
-//		}
+		}
 
 		// Check for a valid server address.
 		if (TextUtils.isEmpty(mServer)) {
 			mServerView.setError(getString(R.string.error_field_required));
 			focusView = mServerView;
 			cancel = true;
-		} else if (!mServer.contains("http://")) {
+		} else if (!mServer.contains("http://") && !mServer.contains("https://")) {
 			mServerView.setError(getString(R.string.error_invalid_server));
 			focusView = mServerView;
 			cancel = true;
@@ -239,8 +232,8 @@ public class LoginActivity extends Activity {
 
 			if (success) {
 				Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
-				// TODO Handle successful login
-//				finish();
+				// TODO Store credentials
+				finish();
 			}
 		}
 
@@ -253,15 +246,21 @@ public class LoginActivity extends Activity {
         @Override
         protected void error(Throwable error) {
         	mAuthTask = null;
-            Log.w(TAG, error.toString(), error);
             
-            // TODO Set EditText field errors
-//            mPasswordView.setError(getString(R.string.error_incorrect_password));
-//			mPasswordView.requestFocus();
-            
-            new ErrorDialog(LoginActivity.this, getResources().getString(R.string.settings_connection_failure) +
-                    " " + getErrorMessage(error), false);
-            showProgress(false);
+        	String msg = getErrorMessage(error);
+        	if (msg.equals("Wrong username or password.")) {
+        		String txt_error = getString(R.string.error_incorrect_username_password);
+        		mUsernameView.setError(txt_error);
+        		mPasswordView.setError(txt_error);
+        		mUsernameView.requestFocus();
+        	} else {
+        		if (msg.equals("A network error occurred. Please check the server address or try again later.")) {
+        			mServerView.setError(getString(R.string.error_invalid_server));
+        		}
+        		new ConnectionErrorDialog(LoginActivity.this, msg, false);
+        	}
+        	
+    		showProgress(false);
         }
 	}
 }
