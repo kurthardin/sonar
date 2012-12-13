@@ -17,7 +17,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.hardincoding.sonar.LoginActivity"
+            android:name="com.hardincoding.sonar.activity.LoginActivity"
             android:label="@string/app_name"
             android:windowSoftInputMode="adjustResize|stateVisible" >
             <intent-filter>
