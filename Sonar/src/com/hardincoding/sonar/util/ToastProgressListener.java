@@ -3,7 +3,7 @@
  */
 package com.hardincoding.sonar.util;
 
-import android.content.Context;
+import android.app.Activity;
 import android.widget.Toast;
 
 /**
@@ -12,11 +12,11 @@ import android.widget.Toast;
  */
 public class ToastProgressListener implements ProgressListener {
 	
-	private final Context mContext;
+	private final Activity mActivity;
 	private int mToastLength = Toast.LENGTH_SHORT;
 	
-	public ToastProgressListener(final Context context) {
-		mContext = context;
+	public ToastProgressListener(final Activity context) {
+		mActivity = context;
 	}
 	
 	public void setToastLength(final int toastLength) {
@@ -24,8 +24,13 @@ public class ToastProgressListener implements ProgressListener {
 	}
 
 	@Override
-	public void updateProgress(String message) {
-		Toast.makeText(mContext, message, mToastLength).show();
+	public void updateProgress(final String message) {
+		mActivity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				Toast.makeText(mActivity, message, mToastLength).show();
+			}
+		});
 	}
 	
 	@Override
