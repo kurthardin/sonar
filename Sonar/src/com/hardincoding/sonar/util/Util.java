@@ -7,6 +7,7 @@ import java.io.Closeable;
 import java.io.UnsupportedEncodingException;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
@@ -17,13 +18,19 @@ import android.util.Log;
  */
 public final class Util {
 
+	private static final String TAG = Util.class.getSimpleName();
+	
     // Character encoding used throughout.
     public static final String UTF_8 = "UTF-8";
 
     // Used by hexEncode()
     private static final char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-	
-	private static final String TAG = Util.class.getSimpleName();
+    
+    // Name of the preferences file.
+    public static final String PREFERENCES_FILE_NAME = "com.hardincoding.sonar.preferences";
+    public static final String PREFERENCES_KEY_SERVER = "com.hardincoding.sonar.preferences.server";
+    public static final String PREFERENCES_KEY_USERNAME = "com.hardincoding.sonar.preferences.username";
+    public static final String PREFERENCES_KEY_PASSWORD = "com.hardincoding.sonar.preferences.password";
 
 	private Util() {
 		// Avoid instantiation
@@ -94,6 +101,10 @@ public final class Util {
             throw new RuntimeException(x);
         }
         return hexEncode(utf8);
+    }
+    
+    public static SharedPreferences getPreferences(Context context) {
+        return context.getSharedPreferences(PREFERENCES_FILE_NAME, 0);
     }
 	
 }

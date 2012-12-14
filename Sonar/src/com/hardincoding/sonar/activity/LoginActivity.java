@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -21,6 +22,7 @@ import com.hardincoding.sonar.util.ConnectionErrorDialog;
 import com.hardincoding.sonar.util.ModalBackgroundTask;
 import com.hardincoding.sonar.util.ProgressListener;
 import com.hardincoding.sonar.util.ToastProgressListener;
+import com.hardincoding.sonar.util.Util;
 
 /**
  * Activity which displays a login screen to the user, offering registration as
@@ -232,7 +234,15 @@ public class LoginActivity extends Activity {
 
 			if (success) {
 				Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
-				// TODO Store credentials
+				
+				Util.getPreferences(LoginActivity.this).edit()
+				.putString(Util.PREFERENCES_KEY_SERVER, mServer)
+				.putString(Util.PREFERENCES_KEY_USERNAME, mUsername)
+				.putString(Util.PREFERENCES_KEY_PASSWORD, mPassword)
+				.apply();
+				
+				Intent stationsIntent = new Intent(LoginActivity.this, StationsActivity.class);
+				startActivity(stationsIntent);
 				finish();
 			}
 		}
