@@ -123,7 +123,10 @@ public enum SubsonicMusicService {
         // This connection manager must be used if more than one thread will
         // be using the HttpClient.
         connManager = new ThreadSafeClientConnManager(params, schemeRegistry);
+		mHttpClient = new DefaultHttpClient(connManager, params);
 		
+		// TODO Use HTTP Basic Auth
+		// Configure preemptive HTTP Basic Authentication
 //		HttpRequestInterceptor preemptiveAuth = new HttpRequestInterceptor() {
 //		    public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
 //		        AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
@@ -141,7 +144,6 @@ public enum SubsonicMusicService {
 //		        }
 //		    }    
 //		};
-		mHttpClient = new DefaultHttpClient(connManager, params);
 //		mHttpClient.addRequestInterceptor(preemptiveAuth, 0);
 	}
 
