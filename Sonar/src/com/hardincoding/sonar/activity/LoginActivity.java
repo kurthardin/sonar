@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -240,6 +242,10 @@ public class LoginActivity extends Activity {
 				.putString(Util.PREFERENCES_KEY_USERNAME, mUsername)
 				.putString(Util.PREFERENCES_KEY_PASSWORD, mPassword)
 				.apply();
+				
+				InputMethodManager imm = (InputMethodManager)getSystemService(
+					      Context.INPUT_METHOD_SERVICE);
+					imm.hideSoftInputFromWindow(mPasswordView.getWindowToken(), 0);
 				
 				Intent stationsIntent = new Intent(LoginActivity.this, StationsActivity.class);
 				startActivity(stationsIntent);
