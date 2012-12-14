@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,13 +46,16 @@ import android.net.NetworkInfo;
 import android.util.Log;
 
 import com.hardincoding.sonar.R;
+import com.hardincoding.sonar.subsonic.domain.Indexes;
 import com.hardincoding.sonar.subsonic.domain.ServerInfo;
 import com.hardincoding.sonar.subsonic.domain.Version;
 import com.hardincoding.sonar.subsonic.service.parser.ErrorParser;
+import com.hardincoding.sonar.subsonic.service.parser.IndexesParser;
 import com.hardincoding.sonar.subsonic.service.parser.LicenseParser;
 import com.hardincoding.sonar.subsonic.service.ssl.SSLSocketFactory;
 import com.hardincoding.sonar.subsonic.service.ssl.TrustSelfSignedStrategy;
 import com.hardincoding.sonar.util.CancellableTask;
+import com.hardincoding.sonar.util.FileUtil;
 import com.hardincoding.sonar.util.ProgressListener;
 import com.hardincoding.sonar.util.Util;
 
@@ -63,23 +65,24 @@ import com.hardincoding.sonar.util.Util;
  *
  */
 public enum SubsonicMusicService {
+	
 	INSTANCE;
 
     private static final String TAG = SubsonicMusicService.class.getSimpleName();
 
     private static final int SOCKET_CONNECT_TIMEOUT = 10 * 1000;
     private static final int SOCKET_READ_TIMEOUT_DEFAULT = 10 * 1000;
-    private static final int SOCKET_READ_TIMEOUT_DOWNLOAD = 30 * 1000;
-    private static final int SOCKET_READ_TIMEOUT_GET_RANDOM_SONGS = 60 * 1000;
-    private static final int SOCKET_READ_TIMEOUT_GET_PLAYLIST = 60 * 1000;
+//    private static final int SOCKET_READ_TIMEOUT_DOWNLOAD = 30 * 1000;
+//    private static final int SOCKET_READ_TIMEOUT_GET_RANDOM_SONGS = 60 * 1000;
+//    private static final int SOCKET_READ_TIMEOUT_GET_PLAYLIST = 60 * 1000;
 
     // Allow 20 seconds extra timeout per MB offset.
-    private static final double TIMEOUT_MILLIS_PER_OFFSET_BYTE = 20000.0 / 1000000.0;
+//    private static final double TIMEOUT_MILLIS_PER_OFFSET_BYTE = 20000.0 / 1000000.0;
 
     /**
      * URL from which to fetch latest versions.
      */
-    private static final String VERSION_URL = "http://subsonic.org/backend/version.view";
+//    private static final String VERSION_URL = "http://subsonic.org/backend/version.view";
 
     private static final int HTTP_REQUEST_MAX_ATTEMPTS = 5;
     private static final long REDIRECTION_CHECK_INTERVAL_MILLIS = 60L * 60L * 1000L;
@@ -193,15 +196,62 @@ public enum SubsonicMusicService {
             Util.close(reader);
         }
     }
+    
+    public Indexes getIndexes(String musicFolderId, boolean refresh, Context context, ProgressListener progressListener) throws Exception {
+        Indexes cachedIndexes = readCachedIndexes(context, musicFolderId);
+        if (cachedIndexes != null && !refresh) {
+            return cachedIndexes;
+        }
+
+        long lastModified = cachedIndexes == null ? 0L : cachedIndexes.getLastModified();
+
+        List<String> parameterNames = new ArrayList<String>();
+        List<Object> parameterValues = new ArrayList<Object>();
+
+        parameterNames.add("ifModifiedSince");
+        parameterValues.add(lastModified);
+
+        if (musicFolderId != null) {
+            parameterNames.add("musicFolderId");
+            parameterValues.add(musicFolderId);
+        }
+
+        Reader reader = getReader(context, progressListener, "getIndexes", null, parameterNames, parameterValues);
+        try {
+            Indexes indexes = new IndexesParser(context).parse(reader, progressListener);
+            if (indexes != null) {
+                writeCachedIndexes(context, indexes, musicFolderId);
+                return indexes;
+            }
+            return cachedIndexes;
+        } finally {
+            Util.close(reader);
+        }
+    }
+
+    private Indexes readCachedIndexes(Context context, String musicFolderId) {
+        String filename = getCachedIndexesFilename(context, musicFolderId);
+        return FileUtil.deserialize(context, filename);
+    }
+
+    private void writeCachedIndexes(Context context, Indexes indexes, String musicFolderId) {
+        String filename = getCachedIndexesFilename(context, musicFolderId);
+        FileUtil.serialize(context, indexes, filename);
+    }
+
+    private String getCachedIndexesFilename(Context context, String musicFolderId) {
+        String s = getRestUrl(null) + musicFolderId;
+        return "indexes-" + Math.abs(s.hashCode()) + ".ser";
+    }
 
     private Reader getReader(Context context, ProgressListener progressListener, String method, HttpParams requestParams) throws Exception {
         return getReader(context, progressListener, method, requestParams, Collections.<String>emptyList(), Collections.emptyList());
     }
 
-    private Reader getReader(Context context, ProgressListener progressListener, String method,
-                             HttpParams requestParams, String parameterName, Object parameterValue) throws Exception {
-        return getReader(context, progressListener, method, requestParams, Arrays.asList(parameterName), Arrays.<Object>asList(parameterValue));
-    }
+//    private Reader getReader(Context context, ProgressListener progressListener, String method,
+//                             HttpParams requestParams, String parameterName, Object parameterValue) throws Exception {
+//        return getReader(context, progressListener, method, requestParams, Arrays.asList(parameterName), Arrays.<Object>asList(parameterValue));
+//    }
 
     private Reader getReader(Context context, ProgressListener progressListener, String method,
                              HttpParams requestParams, List<String> parameterNames, List<Object> parameterValues) throws Exception {
@@ -374,7 +424,7 @@ public enum SubsonicMusicService {
         return networkInfo == null ? -1 : networkInfo.getType();
     }
     
-    private String getRestUrl(String method) {
+    public String getRestUrl(String method) {
         StringBuilder builder = new StringBuilder();
         String serverUrl = mServerAddress;
         builder.append(serverUrl);
