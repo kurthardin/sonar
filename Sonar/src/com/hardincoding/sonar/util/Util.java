@@ -31,6 +31,10 @@ public final class Util {
     public static final String PREFERENCES_KEY_SERVER = "com.hardincoding.sonar.preferences.server";
     public static final String PREFERENCES_KEY_USERNAME = "com.hardincoding.sonar.preferences.username";
     public static final String PREFERENCES_KEY_PASSWORD = "com.hardincoding.sonar.preferences.password";
+	public static final String PREFERENCES_KEY_CACHE_LOCATION = "com.hardincoding.sonar.preferences.cache_location";
+	public static final String PREFERENCES_KEY_FIRST_CACHE_FLAG = "com.hardincoding.sonar.preferences.first_run_flag";
+	
+	public static final String LASTFM_API_KEY = "7685fe10859d2e47df6706504d604e40";
 
 	private Util() {
 		// Avoid instantiation

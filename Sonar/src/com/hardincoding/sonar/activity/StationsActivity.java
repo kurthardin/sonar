@@ -1,5 +1,7 @@
 package com.hardincoding.sonar.activity;
 
+import java.util.logging.Level;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,8 +10,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.hardincoding.sonar.R;
+import com.hardincoding.sonar.subsonic.service.CachedMusicService;
 import com.hardincoding.sonar.subsonic.service.SubsonicMusicService;
 import com.hardincoding.sonar.util.Util;
+
+import de.umass.lastfm.Caller;
+import de.umass.lastfm.cache.FileSystemCache;
 
 public class StationsActivity extends Activity {
 
@@ -18,7 +24,9 @@ public class StationsActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_stations);
 		
-		
+		Caller.getInstance().setUserAgent("Sonar");
+		Caller.getInstance().getLogger().setLevel(Level.ALL); // Set debug level
+		Caller.getInstance().setCache(new FileSystemCache(getCacheDir()));
 	}
 	
 	@Override
@@ -36,6 +44,8 @@ public class StationsActivity extends Activity {
 	    } else {
 	    	SubsonicMusicService.INSTANCE.setServerAddress(server);
 	    	SubsonicMusicService.INSTANCE.setCredentials(username, password);
+	    	
+	    	CachedMusicService.INSTANCE.updateCache(this);
 	    }
 	}
 
@@ -53,7 +63,10 @@ public class StationsActivity extends Activity {
 			.remove(Util.PREFERENCES_KEY_SERVER)
 			.remove(Util.PREFERENCES_KEY_USERNAME)
 			.remove(Util.PREFERENCES_KEY_PASSWORD)
+			.putBoolean(Util.PREFERENCES_KEY_FIRST_CACHE_FLAG, true)
 			.apply();
+			
+			CachedMusicService.INSTANCE.deleteCache(this);
 			
 			Intent loginIntent = new Intent(this, LoginActivity.class);
 			startActivity(loginIntent);

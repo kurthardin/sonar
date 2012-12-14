@@ -19,7 +19,11 @@
 package com.hardincoding.sonar.util;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.util.Log;
+
+import com.hardincoding.sonar.R;
 
 /**
  * @author Sindre Mehus
@@ -29,99 +33,107 @@ public abstract class ModalBackgroundTask<T> extends BackgroundTask<T> {
     private static final String TAG = ModalBackgroundTask.class.getSimpleName();
 
 //    private final AlertDialog progressDialog;
-    private Thread thread;
-    private final boolean finishActivityOnCancel;
-    private boolean cancelled;
+    private Thread mThread;
+    private final boolean mFinishActivityOnCancel;
+    private boolean mCancelled;
+    private boolean mShowDialog = true;
+    private AlertDialog mProgressDialog;
 
     public ModalBackgroundTask(Activity activity, boolean finishActivityOnCancel) {
         super(activity);
-        this.finishActivityOnCancel = finishActivityOnCancel;
-//        progressDialog = createProgressDialog();
+        this.mFinishActivityOnCancel = finishActivityOnCancel;
+        mProgressDialog = createProgressDialog();
     }
 
     public ModalBackgroundTask(Activity activity) {
         this(activity, true);
     }
 
-//    private AlertDialog createProgressDialog() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//        builder.setIcon(android.R.drawable.ic_dialog_info);
-//        builder.setTitle(R.string.background_task_wait);
-//        builder.setMessage(R.string.background_task_loading);
-//        builder.setCancelable(true);
-//        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-//            @Override
-//            public void onCancel(DialogInterface dialogInterface) {
-//                cancel();
-//            }
-//        });
-//        builder.setPositiveButton(R.string.common_cancel, new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialogInterface, int i) {
-//                cancel();
-//            }
-//        });
-//
-//        return builder.create();
-//    }
+    private AlertDialog createProgressDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setIcon(android.R.drawable.ic_dialog_info);
+        builder.setTitle(R.string.background_task_wait);
+        builder.setMessage(R.string.background_task_loading);
+        builder.setCancelable(true);
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                cancel();
+            }
+        });
+        builder.setPositiveButton(R.string.common_cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                cancel();
+            }
+        });
+
+        return builder.create();
+    }
+    
+    public void showDialog(boolean show) {
+    	mShowDialog = show;
+    }
 
     public void execute() {
-        cancelled = false;
-//        progressDialog.show();
+        mCancelled = false;
+        if (mShowDialog) {
+        	mProgressDialog.show();
+        }
 
-        thread = new Thread() {
+        mThread = new Thread() {
             @Override
             public void run() {
                 try {
                     final T result = doInBackground();
-                    if (cancelled) {
-//                        progressDialog.dismiss();
+                    if (mCancelled) {
+                        mProgressDialog.dismiss();
                         return;
                     }
 
                     getHandler().post(new Runnable() {
                         @Override
                         public void run() {
-//                            progressDialog.dismiss();
+                            mProgressDialog.dismiss();
                             done(result);
                         }
                     });
 
                 } catch (final Throwable t) {
-                    if (cancelled) {
+                    if (mCancelled) {
                         return;
                     }
                     getHandler().post(new Runnable() {
                         @Override
                         public void run() {
-//                            progressDialog.dismiss();
+                            mProgressDialog.dismiss();
                             error(t);
                         }
                     });
                 }
             }
         };
-        thread.start();
+        mThread.start();
     }
 
     protected void cancel() {
-        cancelled = true;
-        if (thread != null) {
-            thread.interrupt();
+        mCancelled = true;
+        if (mThread != null) {
+            mThread.interrupt();
         }
 
-        if (finishActivityOnCancel) {
+        if (mFinishActivityOnCancel) {
             getActivity().finish();
         }
     }
 
     protected boolean isCancelled() {
-        return cancelled;
+        return mCancelled;
     }
 
     protected void error(Throwable error) {
         Log.w(TAG, "Got exception: " + error, error);
-        new ErrorDialog(getActivity(), getErrorMessage(error), finishActivityOnCancel);
+        new ErrorDialog(getActivity(), getErrorMessage(error), mFinishActivityOnCancel);
     }
 
     @Override
@@ -129,7 +141,7 @@ public abstract class ModalBackgroundTask<T> extends BackgroundTask<T> {
         getHandler().post(new Runnable() {
             @Override
             public void run() {
-//                progressDialog.setMessage(message);
+                mProgressDialog.setMessage(message);
             }
         });
     }
