@@ -6,7 +6,8 @@ package com.hardincoding.sonar.subsonic.service.parser;
  */
 public class SubsonicRESTException extends Exception {
 
-    private final int code;
+	private static final long serialVersionUID = 7111804170931304573L;	
+	private final int code;
 
     public SubsonicRESTException(int code, String message) {
         super(message);
