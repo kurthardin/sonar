@@ -11,6 +11,7 @@
     <string name="common.cancel">Cancel</string>
     <string name="common.ok">OK</string>
     <string name="error.label">Error</string>
+    <string name="error.unknown_artist">Unknown artist</string>
     <string name="label.error.connection">Connection Error</string>
     <string name="music_service.retry">A network error occurred. Retrying %1$d of %2$d.</string>
     <string name="parser.reading">Reading from server.</string>
