@@ -273,9 +273,8 @@ public class FileUtil {
         	}
         } catch (FileNotFoundException e) {
 			Log.w(TAG, "Failed to serialize object to " + fileName, e);
-            return false;
-		} finally {
 			Util.close(fos);
+            return false;
 		}
     	
         ObjectOutputStream out = null;
@@ -285,7 +284,7 @@ public class FileUtil {
             Log.i(TAG, "Serialized object to " + fileName);
             return true;
         } catch (Throwable x) {
-            Log.w(TAG, "Failed to serialize object to " + fileName);
+            Log.w(TAG, "Failed to serialize object to " + fileName, x);
             return false;
         } finally {
             Util.close(out);
@@ -306,9 +305,8 @@ public class FileUtil {
         	}
         } catch (FileNotFoundException e) {
 			Log.w(TAG, "Failed to deserialize object from " + fileName, e);
-            return null;
-		} finally {
 			Util.close(fis);
+            return null;
 		}
         
 
