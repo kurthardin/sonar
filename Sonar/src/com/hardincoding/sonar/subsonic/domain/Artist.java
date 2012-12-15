@@ -25,7 +25,7 @@ import java.io.Serializable;
  */
 public class Artist implements Serializable {
 
-	private static final long serialVersionUID = 390216832389328219L;
+	private static final long serialVersionUID = 0L;
 	private String mId;
     private String mName;
     private String mIndex;
