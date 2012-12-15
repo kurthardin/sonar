@@ -30,7 +30,10 @@ public enum CachedMusicService {
 	
 	public boolean updateCache(Activity activity) {
 		if (mArtistSyncer == null) {
-			mArtistSyncer = new ArtistSyncTask(activity, false);
+    		SharedPreferences prefs = Util.getPreferences(activity);
+    		boolean finish = prefs.getBoolean(Util.PREFERENCES_KEY_FIRST_CACHE_FLAG, true) ||
+    				CachedMusicService.INSTANCE.getArtists(activity).isEmpty();
+			mArtistSyncer = new ArtistSyncTask(activity, finish);
 			mArtistSyncer.execute();
 			return true;
 		}
@@ -58,7 +61,7 @@ public enum CachedMusicService {
 	
 	public List<Artist> getArtists(Context context) {
 		if (mArtists == null) {
-			mArtists = FileUtil.deserialize(context, getCachedArtistsFilename(), false);
+			mArtists = FileUtil.deserialize(context, getCachedArtistsFilename(), true);
 			if (mArtists == null) {
 				mArtists = new LinkedList<Artist>();
 			}
@@ -67,7 +70,7 @@ public enum CachedMusicService {
 	}
 
     public void writeCachedArtists(Context context) {
-        FileUtil.serialize(context, mArtists, getCachedArtistsFilename(), false);
+        FileUtil.serialize(context, mArtists, getCachedArtistsFilename(), true);
     }
     
     public void deleteCache(Context context) {
@@ -87,8 +90,7 @@ public enum CachedMusicService {
 
     	public ArtistSyncTask(Activity activity, boolean finishActivityOnCancel) {
     		super(activity, finishActivityOnCancel);
-    		SharedPreferences prefs = Util.getPreferences(getActivity());
-    		showDialog(prefs.getBoolean(Util.PREFERENCES_KEY_FIRST_CACHE_FLAG, true));
+    		showDialog(finishActivityOnCancel);
     	}
 
     	@Override
@@ -97,7 +99,6 @@ public enum CachedMusicService {
     		Indexes idxs = SubsonicMusicService.INSTANCE.getIndexes(null, true, getActivity(), this);
     		List<Artist> subsonicArtists = idxs.getArtists();
     		List<Artist> cachedArtists = CachedMusicService.INSTANCE.getArtists(getActivity());
-    		boolean checkCache = !cachedArtists.isEmpty();
     		boolean writeCache = false;
     		int j = 0;
     		for (int i = 0; i < subsonicArtists.size(); i++) {
@@ -105,7 +106,7 @@ public enum CachedMusicService {
     			
     			Artist subsonicArtist = subsonicArtists.get(i);
     			
-    			if (checkCache && j < cachedArtists.size()) {
+    			if (j < cachedArtists.size()) {
     				Artist cachedArtist = cachedArtists.get(j);
     				while (cachedArtist.getName().compareTo(subsonicArtist.getName()) < 0) {
     					cachedArtists.remove(j);
@@ -137,6 +138,8 @@ public enum CachedMusicService {
     		
     		if (writeCache) {
     			CachedMusicService.INSTANCE.writeCachedArtists(getActivity());
+    		} else {
+    			Log.i(TAG, "Artist cache: no changes");
     		}
     		
     		Util.getPreferences(getActivity()).edit()
