@@ -1,6 +1,5 @@
 package com.hardincoding.sonar.activity;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -9,12 +8,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -32,21 +36,7 @@ public class StationsActivity extends ListActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_stations);
 		
-		Caller.getInstance().setUserAgent("Sonar");
-		Caller.getInstance().getLogger().setLevel(Level.ALL); // Set debug level
-		Caller.getInstance().setCache(new FileSystemCache(getCacheDir()));
-		
-		List<Station> stations = new ArrayList<Station>();
-		stations.add(new Station("Create Station"));
-		// TODO Add the stations
-		setListAdapter(new StationAdapter(this, stations));
-	}
-	
-	@Override
-	public void onResume() {
-		super.onResume();
 		SharedPreferences prefs = Util.getPreferences(this);
 		String server = prefs.getString(Util.PREFERENCES_KEY_SERVER, null);
 	    String username = prefs.getString(Util.PREFERENCES_KEY_USERNAME, null);
@@ -62,6 +52,22 @@ public class StationsActivity extends ListActivity {
 	    	
 	    	CachedMusicService.INSTANCE.updateCache(this);
 	    }
+	    
+		setContentView(R.layout.activity_stations);
+		
+		Caller.getInstance().setUserAgent("Sonar");
+		Caller.getInstance().getLogger().setLevel(Level.ALL); // Set debug level
+		Caller.getInstance().setCache(new FileSystemCache(getCacheDir()));
+		
+		registerForContextMenu(getListView());
+		setListAdapter(new StationAdapter(this, CachedMusicService.INSTANCE.getStations(this)));
+		
+	}
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		((StationAdapter) getListAdapter()).notifyDataSetChanged();
 	}
 
 	@Override
@@ -92,9 +98,36 @@ public class StationsActivity extends ListActivity {
 	}
 	
 	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		if (((AdapterContextMenuInfo) menuInfo).id == 0) {
+			return;
+		}
+	    super.onCreateContextMenu(menu, v, menuInfo);
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.context_activity_stations, menu);
+	}
+	
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+	    AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+	    switch (item.getItemId()) {
+	        case R.id.menu_remove_station:
+	        	int idx = (int) info.id - 1;
+	            CachedMusicService.INSTANCE.getStations(this).remove(idx);
+	            CachedMusicService.INSTANCE.writeStations(this);
+	            ((StationAdapter) getListAdapter()).notifyDataSetChanged();
+	            return true;
+	        default:
+	            return super.onContextItemSelected(item);
+	    }
+	}
+	
+	@Override
 	protected void onListItemClick (ListView l, View v, int position, long id) {
 		if (position == 0) {
 			startActivity(new Intent(this, CreateStationActivity.class));
+		} else {
+			// TODO Start playing station at position - 1
 		}
 	}
 	
@@ -105,6 +138,11 @@ public class StationsActivity extends ListActivity {
 	    public StationAdapter(Context context, List<Station> values) {
 	        super(context, R.layout.list_item_station, values);
 	    }
+	    
+	    @Override
+	    public int getCount() {
+	    	return super.getCount() + 1;
+	    }
 
 	    @Override
 	    public View getView(int position, View convertView, ViewGroup parent) {
@@ -112,14 +150,21 @@ public class StationsActivity extends ListActivity {
 	    	if (v == null) {
 	    		v = mInflater.inflate(R.layout.list_item_station, parent, false);
 	    	}
-	        
-	    	Station item = getItem(position);
-	    	if (item != null) {
-	    		TextView textView = (TextView) v.findViewById(R.id.text1);
-	    		if (textView != null) {
-	    			textView.setText(item.getName());
-	    		}
+	    	TextView textView = (TextView) v.findViewById(R.id.text1);
+    		if (textView != null) {
+    			if (position == 0) {
+    				textView.setText(R.string.action_add_station);
+    			} else {
+    				Station item = getItem(position - 1);
+    				if (item != null) {
+		    			textView.setText(item.getName());
+		    			ImageView imageView = (ImageView) v.findViewById(R.id.list_item_station_icon);
+		    			imageView.setVisibility(View.INVISIBLE);
+		    		}
+		    	}
 	    	}
+    		
+	    	
 	        return v;
 	    }
 	}

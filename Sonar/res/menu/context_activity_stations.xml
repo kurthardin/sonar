@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/menu_remove_station" android:title="@string/action_remove_station_short" android:orderInCategory="100"></item>
+    
+
+</menu>

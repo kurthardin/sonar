@@ -1,7 +1,5 @@
 package com.hardincoding.sonar.activity;
 
-import java.util.List;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -49,15 +47,21 @@ public class CreateStationActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
 
 	private void createStation() {
 		mArtist = mArtistView.getText().toString();
-		List<Station> stations = CachedMusicService.INSTANCE.getStations(this);
-		stations.add(new Station(mArtist));
+		
+		if (mArtist.isEmpty()) {
+			mArtistView.setError(getString(R.string.error_field_required));
+			mArtistView.requestFocus();
+			return;
+		}
+		
+		CachedMusicService.INSTANCE.getStations(this).add(new Station(mArtist));
+		CachedMusicService.INSTANCE.writeStations(this);
 		finish();
 	}
 
