@@ -20,6 +20,7 @@ package com.hardincoding.sonar.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -261,36 +262,64 @@ public class FileUtil {
         return index == -1 ? name : name.substring(0, index);
     }
 
-    public static <T extends Serializable> boolean serialize(Context context, T obj, String fileName) {
-        File file = new File(context.getCacheDir(), fileName);
+    public static <T extends Serializable> boolean serialize(Context context, T obj, String fileName, boolean useCacheDir) {
+    	FileOutputStream fos = null;
+        try {
+        	if (useCacheDir) {
+        		File file = new File(context.getCacheDir(), fileName);
+        		fos = new FileOutputStream(file);
+        	} else {
+        		fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
+        	}
+        } catch (FileNotFoundException e) {
+			Log.w(TAG, "Failed to serialize object to " + fileName, e);
+            return false;
+		} finally {
+			Util.close(fos);
+		}
+    	
         ObjectOutputStream out = null;
         try {
-            out = new ObjectOutputStream(new FileOutputStream(file));
+            out = new ObjectOutputStream(fos);
             out.writeObject(obj);
-            Log.i(TAG, "Serialized object to " + file);
+            Log.i(TAG, "Serialized object to " + fileName);
             return true;
         } catch (Throwable x) {
-            Log.w(TAG, "Failed to serialize object to " + file);
+            Log.w(TAG, "Failed to serialize object to " + fileName);
             return false;
         } finally {
             Util.close(out);
         }
     }
 
-    public static <T extends Serializable> T deserialize(Context context, String fileName) {
-        File file = new File(context.getCacheDir(), fileName);
-        if (!file.exists() || !file.isFile()) {
+    public static <T extends Serializable> T deserialize(Context context, String fileName, boolean useCacheDir) {
+    	FileInputStream fis = null;
+        try {
+        	if (useCacheDir) {
+        		File file = new File(context.getCacheDir(), fileName);
+        		if (!file.exists() || !file.isFile()) {
+        			return null;
+        		}
+        		fis = new FileInputStream(file);
+        	} else {
+        		fis = context.openFileInput(fileName);
+        	}
+        } catch (FileNotFoundException e) {
+			Log.w(TAG, "Failed to deserialize object from " + fileName, e);
             return null;
-        }
+		} finally {
+			Util.close(fis);
+		}
+        
 
         ObjectInputStream in = null;
         try {
-            in = new ObjectInputStream(new FileInputStream(file));
+            in = new ObjectInputStream(fis);
             T result = (T) in.readObject();
-            Log.i(TAG, "Deserialized object from " + file);
+            Log.i(TAG, "Deserialized object from " + fileName);
             return result;
         } catch (Throwable x) {
-            Log.w(TAG, "Failed to deserialize object from " + file, x);
+            Log.w(TAG, "Failed to deserialize object from " + fileName, x);
             return null;
         } finally {
             Util.close(in);

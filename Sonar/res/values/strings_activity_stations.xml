@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_create_station">Add</string>
+    <string name="prompt_artist">Artist</string>
+    <string name="label_station_list_empty">No stations...</string>
+    <string name="content_description_station_add">Add a station.</string>
+    
+</resources>

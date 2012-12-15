@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.hardincoding.sonar.domain.Station;
 import com.hardincoding.sonar.subsonic.domain.Artist;
 import com.hardincoding.sonar.subsonic.domain.Indexes;
 import com.hardincoding.sonar.util.FileUtil;
@@ -19,6 +20,8 @@ public enum CachedMusicService {
 	INSTANCE;
 	
 	private ArtistSyncTask mArtistSyncer;
+	
+	private LinkedList<Station> mStations = null;
 	private LinkedList<Artist> mArtists = null;
 	
 	private CachedMusicService() {
@@ -34,9 +37,28 @@ public enum CachedMusicService {
 		return false;
 	}
 	
+	public List<Station> getStations(Context context) {
+		if (mStations == null) {
+			mStations = FileUtil.deserialize(context, getStationsFilename(), false);
+			if (mStations == null) {
+				mStations = new LinkedList<Station>();
+			}
+		}
+		return mStations;
+	}
+	
+	public void writeStations(Context context) {
+		FileUtil.serialize(context, mStations, getStationsFilename(), false);
+	}
+	
+	private String getStationsFilename() {
+    	String s = SubsonicMusicService.INSTANCE.getRestUrl(null);
+        return "artists-" + Math.abs(s.hashCode()) + ".ser";
+    }
+	
 	public List<Artist> getArtists(Context context) {
 		if (mArtists == null) {
-			mArtists = FileUtil.deserialize(context, getCachedArtistsFilename());
+			mArtists = FileUtil.deserialize(context, getCachedArtistsFilename(), false);
 			if (mArtists == null) {
 				mArtists = new LinkedList<Artist>();
 			}
@@ -45,7 +67,7 @@ public enum CachedMusicService {
 	}
 
     public void writeCachedArtists(Context context) {
-        FileUtil.serialize(context, mArtists, getCachedArtistsFilename());
+        FileUtil.serialize(context, mArtists, getCachedArtistsFilename(), false);
     }
     
     public void deleteCache(Context context) {

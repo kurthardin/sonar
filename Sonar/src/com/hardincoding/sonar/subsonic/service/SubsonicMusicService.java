@@ -231,12 +231,12 @@ public enum SubsonicMusicService {
 
     private Indexes readCachedIndexes(Context context, String musicFolderId) {
         String filename = getCachedIndexesFilename(context, musicFolderId);
-        return FileUtil.deserialize(context, filename);
+        return FileUtil.deserialize(context, filename, true);
     }
 
     private void writeCachedIndexes(Context context, Indexes indexes, String musicFolderId) {
         String filename = getCachedIndexesFilename(context, musicFolderId);
-        FileUtil.serialize(context, indexes, filename);
+        FileUtil.serialize(context, indexes, filename, true);
     }
 
     private String getCachedIndexesFilename(Context context, String musicFolderId) {

@@ -1,15 +1,25 @@
 package com.hardincoding.sonar.activity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
-import android.app.Activity;
+import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import com.hardincoding.sonar.R;
+import com.hardincoding.sonar.domain.Station;
 import com.hardincoding.sonar.subsonic.service.CachedMusicService;
 import com.hardincoding.sonar.subsonic.service.SubsonicMusicService;
 import com.hardincoding.sonar.util.Util;
@@ -17,7 +27,7 @@ import com.hardincoding.sonar.util.Util;
 import de.umass.lastfm.Caller;
 import de.umass.lastfm.cache.FileSystemCache;
 
-public class StationsActivity extends Activity {
+public class StationsActivity extends ListActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +37,11 @@ public class StationsActivity extends Activity {
 		Caller.getInstance().setUserAgent("Sonar");
 		Caller.getInstance().getLogger().setLevel(Level.ALL); // Set debug level
 		Caller.getInstance().setCache(new FileSystemCache(getCacheDir()));
+		
+		List<Station> stations = new ArrayList<Station>();
+		stations.add(new Station("Create Station"));
+		// TODO Add the stations
+		setListAdapter(new StationAdapter(this, stations));
 	}
 	
 	@Override
@@ -51,7 +66,7 @@ public class StationsActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.activity_stations, menu);
+		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
 	
@@ -76,4 +91,37 @@ public class StationsActivity extends Activity {
 		return false;
 	}
 	
+	@Override
+	protected void onListItemClick (ListView l, View v, int position, long id) {
+		if (position == 0) {
+			startActivity(new Intent(this, CreateStationActivity.class));
+		}
+	}
+	
+	
+	public class StationAdapter extends ArrayAdapter<Station> {
+		LayoutInflater mInflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		
+	    public StationAdapter(Context context, List<Station> values) {
+	        super(context, R.layout.list_item_station, values);
+	    }
+
+	    @Override
+	    public View getView(int position, View convertView, ViewGroup parent) {
+	    	View v = convertView;
+	    	if (v == null) {
+	    		v = mInflater.inflate(R.layout.list_item_station, parent, false);
+	    	}
+	        
+	    	Station item = getItem(position);
+	    	if (item != null) {
+	    		TextView textView = (TextView) v.findViewById(R.id.text1);
+	    		if (textView != null) {
+	    			textView.setText(item.getName());
+	    		}
+	    	}
+	        return v;
+	    }
+	}
+
 }
