@@ -2,10 +2,8 @@
 <resources>
     <string name="action_add_station">Add Station</string>
     <string name="action_add_station_short">Add</string>
-    <string name="prompt_artist">Enter an artist</string>
-    <string name="prompt_artist_short">Artist</string>
+    <string name="prompt_artist_track">Enter an artist or song</string>
     <string name="label_station_list_empty">No stations...</string>
     <string name="content_description_station_add">Add a station.</string>
     <string name="action_remove_station_short">Remove</string>
-    
 </resources>

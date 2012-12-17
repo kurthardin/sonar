@@ -3,11 +3,20 @@
  */
 package com.hardincoding.sonar.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
@@ -109,6 +118,46 @@ public final class Util {
     
     public static SharedPreferences getPreferences(Context context) {
         return context.getSharedPreferences(PREFERENCES_FILE_NAME, 0);
+    }
+
+    /**
+     * Get the contents of an <code>InputStream</code> as a <code>byte[]</code>.
+     * <p/>
+     * This method buffers the input internally, so there is no need to use a
+     * <code>BufferedInputStream</code>.
+     *
+     * @param input the <code>InputStream</code> to read from
+     * @return the requested byte array
+     * @throws NullPointerException if the input is null
+     * @throws IOException          if an I/O error occurs
+     */
+    public static byte[] toByteArray(InputStream input) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        copy(input, output);
+        return output.toByteArray();
+    }
+
+    public static long copy(InputStream input, OutputStream output)
+            throws IOException {
+        byte[] buffer = new byte[1024 * 4];
+        long count = 0;
+        int n;
+        while (-1 != (n = input.read(buffer))) {
+            output.write(buffer, 0, n);
+            count += n;
+        }
+        return count;
+    }
+
+    public static Drawable createDrawableFromBitmap(Context context, Bitmap bitmap) {
+        // BitmapDrawable(Resources, Bitmap) was introduced in Android 1.6.  Use reflection to maintain
+        // compatibility with 1.5.
+        try {
+            Constructor<BitmapDrawable> constructor = BitmapDrawable.class.getConstructor(Resources.class, Bitmap.class);
+            return constructor.newInstance(context.getResources(), bitmap);
+        } catch (Throwable x) {
+            return new BitmapDrawable(bitmap);
+        }
     }
 	
 }

@@ -13,7 +13,7 @@
              android:id="@+id/station_artist"
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
-             android:hint="@string/prompt_artist"
+             android:hint="@string/prompt_artist_track"
              android:inputType="text"
              android:maxLines="1"
              android:singleLine="true" />

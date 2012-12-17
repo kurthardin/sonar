@@ -158,7 +158,7 @@ public class StationsActivity extends ListActivity {
     				Station item = getItem(position - 1);
     				if (item != null) {
 		    			textView.setText(item.getName());
-		    			ImageView imageView = (ImageView) v.findViewById(R.id.list_item_station_icon);
+		    			ImageView imageView = (ImageView) v.findViewById(R.id.list_item_icon);
 		    			imageView.setVisibility(View.INVISIBLE);
 		    		}
 		    	}
