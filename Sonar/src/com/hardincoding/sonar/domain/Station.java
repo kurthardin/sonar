@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class Station implements Serializable {
 	
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 	
 	private String mName;
 	private String mArtist;
