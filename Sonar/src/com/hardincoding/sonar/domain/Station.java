@@ -4,9 +4,11 @@ import java.io.Serializable;
 
 public class Station implements Serializable {
 	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	private String mName;
+	private String mArtist;
+	private String mTrack;
 	private String mImageFilename;
 	
 	public Station(final String name) {
@@ -23,6 +25,22 @@ public class Station implements Serializable {
 	
 	public void setImageFilename(final String filename) {
 		mImageFilename = filename;
+	}
+
+	public String getArtist() {
+		return mArtist;
+	}
+
+	public void setArtist(String artist) {
+		mArtist = artist;
+	}
+
+	public String getTrack() {
+		return mTrack;
+	}
+
+	public void setTrack(String track) {
+		mTrack = track;
 	}
 
 }
